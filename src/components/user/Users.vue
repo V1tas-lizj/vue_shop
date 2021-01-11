@@ -16,6 +16,55 @@
           <el-button type="primary">添加用户</el-button>
         </el-col>
       </el-row>
+      <el-table :data="userList" border stripe>
+        <el-table-column type="index"> </el-table-column>
+        <el-table-column prop="username" label="姓名"> </el-table-column>
+        <el-table-column prop="email" label="邮箱"> </el-table-column>
+        <el-table-column prop="mobile" label="电话"> </el-table-column>
+        <el-table-column prop="role_name" label="角色"> </el-table-column>
+        <el-table-column label="状态">
+          <template slot-scope="scope">
+            <el-switch v-model="scope.row.mg_state"> </el-switch>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作">
+          <template>
+            <el-button
+              type="primary"
+              icon="el-icon-edit"
+              size="mini"
+            ></el-button>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              size="mini"
+            ></el-button>
+            <el-tooltip
+              effect="dark"
+              content="设置权限"
+              placement="top"
+              :enterable="false"
+            >
+              <el-button
+                type="warning"
+                icon="el-icon-setting"
+                size="mini"
+              ></el-button>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="queryParams.pagenum"
+        :page-sizes="[2, 5, 10, 20]"
+        :page-size="queryParams.pagesize"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+      >
+      </el-pagination>
     </el-card>
   </div>
 </template>
@@ -31,7 +80,8 @@ export default {
         pagesize: 2,
         pagenum: 1
       },
-      userList: []
+      userList: [],
+      total: 0
     }
   },
   methods: {
@@ -43,7 +93,16 @@ export default {
         return this.$message.error(result.meta.msg)
       }
       this.userList = result.data.users
+      this.total = result.data.total
       console.log(result)
+    },
+    handleSizeChange(newPageSize) {
+      this.queryParams.pagesize = newPageSize
+      this.getUserList()
+    },
+    handleCurrentChange(newPageNum) {
+      this.queryParams.pagenum = newPageNum
+      this.getUserList()
     }
   }
 }
