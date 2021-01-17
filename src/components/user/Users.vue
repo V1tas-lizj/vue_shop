@@ -54,6 +54,7 @@
               type="danger"
               icon="el-icon-delete"
               size="mini"
+              @click="removeUserById(scope.row.id)"
             ></el-button>
             <el-tooltip
               effect="dark"
@@ -286,6 +287,24 @@ export default {
           this.getUserList()
         }
       })
+    },
+    removeUserById(id) {
+      this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(async () => {
+          const { data: result } = await this.$http.delete(`users/${id}`)
+          if (result.meta.status !== 200) {
+            return this.$message.error(result.meta.msg)
+          }
+          this.$message.success(result.meta.msg)
+          this.getUserList()
+        })
+        .catch(() => {
+          // 点击取消操作，不做处理
+        })
     }
   }
 }
