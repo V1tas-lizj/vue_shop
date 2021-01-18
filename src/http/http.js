@@ -41,6 +41,22 @@ const http = {
           reject(err.data.message || err.data)
         })
     })
+  },
+  post: function(url, params) {
+    return new Promise((resolve, reject) => {
+      axios
+        .post(url, params)
+        .then(res => {
+          if (res.data.meta.status !== 200) {
+            reject(res.data.meta.msg)
+          } else {
+            resolve(res.data.data)
+          }
+        })
+        .catch(err => {
+          reject(err.data.message || err.data)
+        })
+    })
   }
 }
 

@@ -70,13 +70,35 @@
               @click="removeUserById(scope.row.id)"
               >删除</el-button
             >
-            <el-button type="warning" icon="el-icon-setting" size="mini"
+            <el-button
+              type="warning"
+              icon="el-icon-setting"
+              size="mini"
+              @click="showSettingRightDialog(scope.row)"
               >分配权限</el-button
             >
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 设置权限 -->
+    <el-dialog title="提示" :visible.sync="settingRightDialog" width="50%">
+      <el-tree
+        :data="rightTree"
+        :props="rightProps"
+        ref="roleTreeRef"
+        show-checkbox
+        node-key="id"
+        default-expand-all
+        :default-checked-keys="checkedKeys"
+      ></el-tree>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="settingRightDialog = false">取 消</el-button>
+        <el-button type="primary" @click="allotRight">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -84,7 +106,15 @@ import http from '@/http/http'
 export default {
   data() {
     return {
-      roleList: []
+      roleList: [],
+      settingRightDialog: false,
+      rightTree: [],
+      rightProps: {
+        children: 'children',
+        label: 'authName'
+      },
+      checkedKeys: [],
+      roleId: ''
     }
   },
   created() {
@@ -95,7 +125,6 @@ export default {
       try {
         const result = await http.get('roles')
         this.roleList = result
-        console.log(result)
       } catch (error) {
         this.$message.error(error.message || error)
       }
@@ -116,6 +145,43 @@ export default {
           }
         })
         .catch(() => {})
+    },
+    async showSettingRightDialog(role) {
+      this.checkedKeys = []
+      this.roleId = role.id
+      // 获取权限树
+      try {
+        const result = await http.get('rights/tree')
+        this.rightTree = result
+        this.getLeftTree(role, this.checkedKeys)
+        this.settingRightDialog = true
+      } catch (error) {
+        this.$message.error(error)
+      }
+    },
+    getLeftTree(node, array) {
+      if (!node.children) {
+        return array.push(node.id)
+      }
+      node.children.forEach(item => {
+        this.getLeftTree(item, array)
+      })
+    },
+    async allotRight() {
+      // 获取选中的key
+      const keys = [
+        ...this.$refs.roleTreeRef.getCheckedKeys(),
+        ...this.$refs.roleTreeRef.getHalfCheckedKeys()
+      ]
+      const rids = keys.join(',')
+      try {
+        await http.post(`roles/${this.roleId}/rights`, { rids })
+        this.$message.success('分配成功')
+        await this.getRoleList()
+        this.settingRightDialog = false
+      } catch (error) {
+        this.$message.error(error)
+      }
     }
   }
 }
