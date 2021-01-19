@@ -66,6 +66,7 @@
                 type="warning"
                 icon="el-icon-setting"
                 size="mini"
+                @click="setRole(scope.row)"
               ></el-button>
             </el-tooltip>
           </template>
@@ -146,9 +147,33 @@
         <el-button type="primary" @click="editUser">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 分配角色 -->
+    <el-dialog
+      title="分配角色"
+      :visible.sync="setRoleDialogVisible"
+      width="50%"
+    >
+      <p>当前的用户:{{ userInfo.username }}</p>
+      <p>当前的角色:{{ userInfo.role_name }}</p>
+      分配新角色：<el-select v-model="selectedRoleId" placeholder="请选择">
+        <el-option
+          v-for="item in roleList"
+          :key="item.id"
+          :label="item.roleName"
+          :value="item.id"
+        >
+        </el-option>
+      </el-select>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRoleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="commitSetRole">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
+import http from '../../http/http'
 export default {
   created() {
     this.getUserList()
@@ -210,7 +235,11 @@ export default {
         username: '',
         email: '',
         mobile: ''
-      }
+      },
+      setRoleDialogVisible: false,
+      userInfo: {},
+      roleList: [],
+      selectedRoleId: ''
     }
   },
   methods: {
@@ -305,6 +334,32 @@ export default {
         .catch(() => {
           // 点击取消操作，不做处理
         })
+    },
+    async setRole(user) {
+      this.selectedRoleId = ''
+      this.userInfo = user
+      try {
+        const result = await http.get('roles')
+        this.roleList = result
+        this.setRoleDialogVisible = true
+      } catch (error) {
+        this.$message.error(error)
+      }
+    },
+    async commitSetRole() {
+      if (!this.selectedRoleId) {
+        return this.$message.error('请选择相关角色')
+      }
+      try {
+        await http.put(`users/${this.userInfo.id}/role`, {
+          rid: this.selectedRoleId
+        })
+        this.$message.success('更新角色成功')
+        await this.getUserList()
+        this.setRoleDialogVisible = false
+      } catch (error) {
+        this.$message.error(error)
+      }
     }
   }
 }
