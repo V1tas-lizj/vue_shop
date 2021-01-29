@@ -47,7 +47,7 @@ const http = {
       axios
         .post(url, params)
         .then(res => {
-          if (res.data.meta.status !== 200) {
+          if (res.data.meta.status !== 200 && res.data.meta.status !== 201) {
             reject(res.data.meta.msg)
           } else {
             resolve(res.data.data)
